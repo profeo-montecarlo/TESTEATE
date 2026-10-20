@@ -93,6 +93,7 @@ const ROOM_PIN = "8420";
 
 let myStudentName = "";
 let myStudentId = "";
+let lastRenderedQuestion = -1; // Control para evitar reinicios de pantalla
 
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -127,9 +128,14 @@ function registerStudent() {
         if (!roomData) return;
 
         if (roomData.estado === 'jugando') {
-            showScreen('screen-student-quiz');
-            renderStudentQuestion(roomData.preguntaActual);
+            // Solo redibuja si cambia de pregunta realmente
+            if (lastRenderedQuestion !== roomData.preguntaActual) {
+                lastRenderedQuestion = roomData.preguntaActual;
+                showScreen('screen-student-quiz');
+                renderStudentQuestion(roomData.preguntaActual);
+            }
         } else if (roomData.estado === 'terminado') {
+            showScreen('screen-podium');
             showPodiumScreen();
         }
     });
@@ -149,7 +155,6 @@ function renderStudentQuestion(qIndex) {
         btn.className = `option-btn opt-${index}`;
         btn.innerText = opt;
         
-        // Asignación directa y limpia del evento con cierre de datos fijo
         let currentOptIndex = index;
         let correctOptIndex = parseInt(q.correct);
 
@@ -183,7 +188,6 @@ function submitAnswer(qIndex, selectedIdx, correctIdx) {
 }
 
 function showPodiumScreen() {
-    showScreen('screen-podium');
     db.ref('salas/' + ROOM_PIN + '/jugadores').once('value', (snapshot) => {
         let data = snapshot.val();
         let rankingContainer = document.getElementById('podium-ranking');
