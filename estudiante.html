@@ -148,10 +148,15 @@ function renderStudentQuestion(qIndex) {
         let btn = document.createElement('button');
         btn.className = `option-btn opt-${index}`;
         btn.innerText = opt;
-        // Corrección aplicada: se valida de forma estricta el índice correcto
+        
+        // Asignación directa y limpia del evento con cierre de datos fijo
+        let currentOptIndex = index;
+        let correctOptIndex = parseInt(q.correct);
+
         btn.onclick = function() {
-            submitAnswer(qIndex, index, Number(q.correct));
+            submitAnswer(qIndex, currentOptIndex, correctOptIndex);
         };
+        
         optionsContainer.appendChild(btn);
     });
 }
@@ -161,7 +166,7 @@ function submitAnswer(qIndex, selectedIdx, correctIdx) {
     buttons.forEach(b => b.disabled = true);
 
     let feedback = document.getElementById('student-feedback');
-    let isCorrect = (Number(selectedIdx) === Number(correctIdx));
+    let isCorrect = (selectedIdx === correctIdx);
 
     if (isCorrect) {
         feedback.style.color = "#107c41";
