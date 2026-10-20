@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExcelData Quest - Panel Profesor</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script src="preguntas.js"></script>
+
+    <style>
+        :root { --primary: #107c41; --secondary: #217346; --dark: #1b1b1b; --light: #f3f2f1; --accent: #ffb900; --danger: #d83b01; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--light); color: var(--dark); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 95vh; }
+        .container { width: 90%; max-width: 900px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); text-align: center; }
+        h1 { color: var(--primary); margin-bottom: 5px; }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .btn { background-color: var(--primary); color: white; border: none; padding: 12px 25px; font-size: 1.1rem; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
+        .btn:hover { background-color: var(--secondary); }
+        .btn-danger { background-color: var(--danger); }
+        .pin-display { background: #fff8dc; border: 2px dashed var(--accent); padding: 15px; font-size: 1.8rem; font-weight: bold; border-radius: 8px; display: inline-block; margin: 15px 0; letter-spacing: 2px; }
+        .players-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-height: 220px; overflow-y: auto; background: #faf9f8; padding: 15px; border-radius: 8px; border: 1px solid #edebe9; margin: 20px 0; }
+        .player-chip { background: var(--primary); color: white; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 0.95rem; }
+        .question-counter { font-size: 0.85rem; color: #605e5c; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        .question-text { font-size: 1.4rem; font-weight: 600; margin-bottom: 25px; }
+        .podium-list { list-style: none; padding: 0; max-width: 500px; margin: 0 auto 20px auto; text-align: left; }
+        .podium-item { background: #faf9f8; margin: 8px 0; padding: 12px 20px; border-radius: 6px; display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1rem; border-left: 5px solid var(--primary); }
+        .admin-controls { margin-top: 15px; border-top: 1px solid #edebe9; padding-top: 15px; display: flex; justify-content: space-between; align-items: center; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>📊 Panel del Profesor</h1>
+    <p style="color: #605e5c; margin-top: 0;">Control de Sala Interactiva</p>
+
+    <!-- PANTALLA DE SALA DE ESPERA -->
+    <div id="screen-lobby" class="screen active">
+        <h3>Sala de Espera en Directo</h3>
+        <p>Comparte este PIN con tus estudiantes:</p>
+        <div class="pin-display">PIN: <span id="lobby-pin">8420</span></div>
+        
+        <h4>Estudiantes Conectados (<span id="player-count">0</span>):</h4>
+        <div class="players-grid" id="players-list-container">
+            <span style="color: #a19f9d; font-style: italic;">Esperando conexiones...</span>
+        </div>
+
+        <div class="admin-controls">
+            <button class="btn btn-danger" onclick="resetLobby()">Reiniciar Sala 🔄</button>
+            <button class="btn" onclick="hostStartQuiz()" style="font-size: 1.2rem;">¡Iniciar Partida 🎯</button>
+        </div>
+    </div>
+
+    <!-- PANTALLA DE PREGUNTA Y ESTADÍSTICAS -->
+    <div id="screen-host-quiz" class="screen">
+        <div class="question-counter" id="host-q-counter">Pregunta 1</div>
+        <div class="question-text" id="host-q-text">Cargando pregunta...</div>
+        
+        <div style="background: #faf9f8; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: left;">
+            <p id="host-correct-answer-info" style="margin: 5px 0; font-size: 1rem;"><strong>Respuesta Correcta:</strong> Cargando...</p>
+            <p style="margin: 5px 0; font-size: 1rem;"><strong>Estudiantes que han respondido:</strong> <span id="host-answers-count" style="font-weight: bold; color: var(--primary);">0 / 0</span></p>
+        </div>
+
+        <button class="btn" onclick="hostShowPodium()" style="font-size: 1.2rem;">Ver Podio Parcial 🏆</button>
+    </div>
+
+    <!-- PANTALLA DE PODIO PARCIAL -->
+    <div id="screen-host-podium" class="screen">
+        <h2>🏆 Podio Parcial de la Ronda</h2>
+        <ul class="podium-list" id="host-podium-ranking"></ul>
+        <button class="btn" onclick="hostProceedToNextQuestion()" style="font-size: 1.2rem;">Siguiente Pregunta ➡️</button>
+    </div>
+
+    <!-- PANTALLA DE PODIO FINAL -->
+    <div id="screen-podium" class="screen">
+        <h2>🎉 ¡Podio Final del Concurso!</h2>
+        <ul class="podium-list" id="podium-ranking"></ul>
+        <button class="btn" onclick="location.reload()" style="margin-top: 10px;">Reiniciar Actividad 🔄</button>
+    </div>
+</div>
+
+<script>
+const firebaseConfig = {
+    apiKey: "AIzaSyCWca4NWYFvuKpYINgfrjqtVbfCMNr9GKo",
+    authDomain: "exceldataquest.firebaseapp.com",
+    databaseURL: "https://exceldataquest-default-rtdb.firebaseio.com",
+    projectId: "exceldataquest",
+    storageBucket: "exceldataquest.firebasestorage.app",
+    messagingSenderId: "108453200501",
+    appId: "1:108453200501:web:93dc991ceadc63ab476e3c",
+    measurementId: "G-LHD57H151E"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const ROOM_PIN = "8420";
+
+function showScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+}
+
+window.onload = function() {
+    setupHost();
+};
+
+function setupHost() {
+    document.getElementById('lobby-pin').innerText = ROOM_PIN;
+    db.ref('salas/' + ROOM_PIN).set({
+        estado: 'espera',
+        preguntaActual: 0,
+        jugadores: {}
+    });
+
+    db.ref('salas/' + ROOM_PIN + '/jugadores').on('value', (snapshot) => {
+        let data = snapshot.val();
+        let container = document.getElementById('players-list-container');
+        let countElem = document.getElementById('player-count');
+        if (!data) {
+            container.innerHTML = `<span style="color: #a19f9d; font-style: italic;">Esperando conexiones...</span>`;
+            countElem.innerText = "0";
+            return;
+        }
+        let players = Object.values(data);
+        countElem.innerText = players.length;
+        container.innerHTML = players.map(p => `<div class="player-chip">👤 ${p.nombre} (${p.puntaje || 0} pts)</div>`).join('');
+    });
+}
+
+function resetLobby() {
+    setupHost();
+}
+
+function hostStartQuiz() {
+    db.ref('salas/' + ROOM_PIN).update({
+        estado: 'jugando',
+        preguntaActual: 0
+    });
+    startHostQuizView(0);
+}
+
+function startHostQuizView(qIndex) {
+    showScreen('screen-host-quiz');
+    let q = bancoPreguntas[qIndex];
+    document.getElementById('host-q-counter').innerText = `Pregunta ${qIndex + 1} de ${bancoPreguntas.length}`;
+    document.getElementById('host-q-text').innerText = q.q;
+    document.getElementById('host-correct-answer-info').innerHTML = `<strong>Respuesta Correcta:</strong> <span style="color: var(--primary);">${q.options[q.correct]}</span>`;
+
+    db.ref('salas/' + ROOM_PIN + '/respuestasRonda/' + qIndex).on('value', (snapshot) => {
+        let resp = snapshot.val() || {};
+        let totalJugadores = document.getElementById('player-count').innerText;
+        let respondidos = Object.keys(resp).length;
+        document.getElementById('host-answers-count').innerText = `${respondidos} / ${totalJugadores}`;
+    });
+}
+
+function hostShowPodium() {
+    showScreen('screen-host-podium');
+    db.ref('salas/' + ROOM_PIN + '/jugadores').once('value', (snapshot) => {
+        let data = snapshot.val();
+        let rankingContainer = document.getElementById('host-podium-ranking');
+        if (!data) {
+            rankingContainer.innerHTML = `<li>No hay puntajes registrados aún.</li>`;
+            return;
+        }
+        let playersArray = Object.values(data);
+        playersArray.sort((a, b) => (b.puntaje || 0) - (a.puntaje || 0));
+
+        rankingContainer.innerHTML = playersArray.map((p, index) => {
+            let medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `📌 #${index + 1}`;
+            return `<li class="podium-item"><span>${medal} ${p.nombre}</span><span style="color: var(--primary);">${p.puntaje || 0} Puntos</span></li>`;
+        }).join('');
+    });
+}
+
+function hostProceedToNextQuestion() {
+    db.ref('salas/' + ROOM_PIN + '/preguntaActual').once('value', (snapshot) => {
+        let currentQ = snapshot.val() || 0;
+        let nextQ = currentQ + 1;
+
+        if (nextQ < bancoPreguntas.length) {
+            db.ref('salas/' + ROOM_PIN + '/preguntaActual').set(nextQ);
+            startHostQuizView(nextQ);
+        } else {
+            db.ref('salas/' + ROOM_PIN + '/estado').set('terminado');
+            showPodiumScreen();
+        }
+    });
+}
+
+function showPodiumScreen() {
+    showScreen('screen-podium');
+    db.ref('salas/' + ROOM_PIN + '/jugadores').once('value', (snapshot) => {
+        let data = snapshot.val();
+        let rankingContainer = document.getElementById('podium-ranking');
+        if (!data) return;
+        let playersArray = Object.values(data);
+        playersArray.sort((a, b) => (b.puntaje || 0) - (a.puntaje || 0));
+
+        rankingContainer.innerHTML = playersArray.map((p, index) => {
+            let medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `📌 #${index + 1}`;
+            return `<li class="podium-item"><span>${medal} ${p.nombre}</span><span style="color: var(--primary);">${p.puntaje || 0} Puntos</span></li>`;
+        }).join('');
+    });
+}
+</script>
+
+</body>
+</html>
