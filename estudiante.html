@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ExcelData Quest - Acceso Estudiante</title>
+    <title>ExcelData Quest - Estudiante Pro</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <script src="preguntas.js"></script>
@@ -27,40 +27,40 @@
         .option-btn { padding: 22px; font-size: 1.1rem; font-weight: 600; border: none; border-radius: 8px; cursor: pointer; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .option-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .opt-0 { background-color: #d83b01; } .opt-1 { background-color: #0078d4; } .opt-2 { background-color: #107c41; } .opt-3 { background-color: #b4009e; }
-        .podium-list { list-style: none; padding: 0; max-width: 500px; margin: 0 auto 20px auto; text-align: left; }
-        .podium-item { background: #faf9f8; margin: 8px 0; padding: 12px 20px; border-radius: 6px; display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1rem; border-left: 5px solid var(--primary); }
+        .podium-list { list-style: none; padding: 0; max-width: 500px; margin: 0 auto; text-align: left; }
+        .podium-item { background: #faf9f8; margin: 6px 0; padding: 10px 15px; border-radius: 6px; display: flex; justify-content: space-between; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>📊 ExcelData Quest</h1>
-    <p style="color: #605e5c; margin-top: 0;">Plataforma Interactiva para Estudiantes</p>
+    <p style="color: #605e5c; margin-top: 0;">Portal del Estudiante</p>
 
-    <!-- PANTALLA DE REGISTRO DIRECTO -->
+    <!-- LOGIN -->
     <div id="screen-student-login" class="screen active">
-        <h3>Ingresa a la Sala</h3>
+        <h3>Ingresar a la Sala</h3>
         <div class="form-group">
             <label>PIN de la Sala:</label>
-            <input type="text" id="input-pin" placeholder="Ej: 8420" maxlength="4">
+            <input type="text" id="input-pin" placeholder="Ej: 2026" maxlength="4">
         </div>
         <div class="form-group">
-            <label>Tu Nombre y Apellido / N° de Lista:</label>
+            <label>Tu Nombre y Número de Lista:</label>
             <input type="text" id="input-name" placeholder="Ej: Sofia Pérez - 15">
         </div>
         <button class="btn" onclick="registerStudent()">Unirme al Juego 🚀</button>
         <p id="login-error" style="color: var(--danger); font-weight: bold; margin-top: 10px;"></p>
     </div>
 
-    <!-- PANTALLA DE ESPERA -->
+    <!-- ESPERA -->
     <div id="screen-student-waiting" class="screen">
         <div class="pin-display" id="student-welcome-msg">¡Hola! 👋</div>
         <p style="font-size: 1.2rem; color: var(--primary); font-weight: bold; margin: 20px 0;">
-            Te has registrado correctamente.<br>Espera a que el profesor inicie la partida en el proyector...
+            Te has registrado correctamente.<br>Espera a que el profesor inicie la partida...
         </p>
     </div>
 
-    <!-- PANTALLA DE PREGUNTA / JUEGO -->
+    <!-- PREGUNTA -->
     <div id="screen-student-quiz" class="screen">
         <div class="question-counter" id="student-q-counter">Pregunta en curso</div>
         <div class="question-text" id="student-q-text">Cargando...</div>
@@ -68,7 +68,7 @@
         <div id="student-feedback" style="font-size: 1.2rem; font-weight: bold; margin-top: 15px;"></div>
     </div>
 
-    <!-- PANTALLA DE PODIO FINAL -->
+    <!-- PODIO FINAL -->
     <div id="screen-podium" class="screen">
         <h2>🎉 ¡Podio Final del Concurso!</h2>
         <ul class="podium-list" id="podium-ranking"></ul>
@@ -89,11 +89,13 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-const ROOM_PIN = "8420";
 
+let currentPin = "";
 let myStudentName = "";
 let myStudentId = "";
-let lastRenderedQuestion = -1; // Control para evitar reinicios de pantalla
+let lastRenderedQuestion = -1;
+let currentQuestionsList = [];
+let questionStartTime = 0;
 
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -101,12 +103,12 @@ function showScreen(screenId) {
 }
 
 function registerStudent() {
-    let pinInput = document.getElementById('input-pin').value.trim();
+    currentPin = document.getElementById('input-pin').value.trim();
     myStudentName = document.getElementById('input-name').value.trim();
     let errorMsg = document.getElementById('login-error');
 
-    if (pinInput !== ROOM_PIN) {
-        errorMsg.innerText = "PIN incorrecto. Consulta con el profesor.";
+    if (currentPin === "") {
+        errorMsg.innerText = "Ingresa el PIN de la sala.";
         return;
     }
     if (myStudentName === "") {
@@ -114,36 +116,50 @@ function registerStudent() {
         return;
     }
 
-    myStudentId = 'user_' + Math.random().toString(36).substr(2, 9);
-    db.ref('salas/' + ROOM_PIN + '/jugadores/' + myStudentId).set({
-        nombre: myStudentName,
-        puntaje: 0
-    });
-
-    showScreen('screen-student-waiting');
-    document.getElementById('student-welcome-msg').innerText = `¡Hola, ${myStudentName}! 👋`;
-
-    db.ref('salas/' + ROOM_PIN).on('value', (snapshot) => {
-        let roomData = snapshot.val();
-        if (!roomData) return;
-
-        if (roomData.estado === 'jugando') {
-            // Solo redibuja si cambia de pregunta realmente
-            if (lastRenderedQuestion !== roomData.preguntaActual) {
-                lastRenderedQuestion = roomData.preguntaActual;
-                showScreen('screen-student-quiz');
-                renderStudentQuestion(roomData.preguntaActual);
-            }
-        } else if (roomData.estado === 'terminado') {
-            showScreen('screen-podium');
-            showPodiumScreen();
+    db.ref('salas/' + currentPin).once('value', (snapshot) => {
+        let salaData = snapshot.val();
+        if (!salaData) {
+            errorMsg.innerText = "La sala con ese PIN no existe o no ha sido creada.";
+            return;
         }
+
+        myStudentId = 'user_' + Math.random().toString(36).substr(2, 9);
+        db.ref('salas/' + currentPin + '/jugadores/' + myStudentId).set({
+            nombre: myStudentName,
+            puntaje: 0
+        });
+
+        showScreen('screen-student-waiting');
+        document.getElementById('student-welcome-msg').innerText = `¡Hola, ${myStudentName}! 👋`;
+
+        // Cargar preguntas del tema de esta sala
+        let temaKey = salaData.tema;
+        currentQuestionsList = repositorioJuegos[temaKey].preguntas;
+
+        // Escuchar cambios de estado en la sala
+        db.ref('salas/' + currentPin).on('value', (snap) => {
+            let data = snap.val();
+            if (!data) return;
+
+            if (data.estado === 'jugando') {
+                if (lastRenderedQuestion !== data.preguntaActual) {
+                    lastRenderedQuestion = data.preguntaActual;
+                    questionStartTime = data.inicioPregunta || Date.now();
+                    showScreen('screen-student-quiz');
+                    renderStudentQuestion(data.preguntaActual);
+                }
+            } else if (data.estado === 'terminado' || data.preguntaActual === -1) {
+                // Si la sala muestra podio
+                showScreen('screen-podium');
+                showPodiumScreen();
+            }
+        });
     });
 }
 
 function renderStudentQuestion(qIndex) {
-    let q = bancoPreguntas[qIndex];
-    document.getElementById('student-q-counter').innerText = `Pregunta ${qIndex + 1} de ${bancoPreguntas.length}`;
+    let q = currentQuestionsList[qIndex];
+    document.getElementById('student-q-counter').innerText = `Pregunta ${qIndex + 1} de ${currentQuestionsList.length}`;
     document.getElementById('student-q-text').innerText = q.q;
     document.getElementById('student-feedback').innerText = "";
 
@@ -161,7 +177,6 @@ function renderStudentQuestion(qIndex) {
         btn.onclick = function() {
             submitAnswer(qIndex, currentOptIndex, correctOptIndex);
         };
-        
         optionsContainer.appendChild(btn);
     });
 }
@@ -174,21 +189,26 @@ function submitAnswer(qIndex, selectedIdx, correctIdx) {
     let isCorrect = (selectedIdx === correctIdx);
 
     if (isCorrect) {
+        // Cálculo de puntaje diferencial por velocidad (máx 1000, mínimo 500)
+        let elapsedTime = (Date.now() - questionStartTime) / 1000;
+        let earnedPoints = Math.max(500, Math.round(1000 - (elapsedTime * 20)));
+
         feedback.style.color = "#107c41";
-        feedback.innerText = "¡Respuesta Correcta! 🎉 (+100 pts)";
-        db.ref('salas/' + ROOM_PIN + '/jugadores/' + myStudentId + '/puntaje').transaction((currentScore) => {
-            return (currentScore || 0) + 100;
+        feedback.innerText = `¡Respuesta Correcta! 🎉 (+${earnedPoints} pts)`;
+
+        db.ref('salas/' + currentPin + '/jugadores/' + myStudentId + '/puntaje').transaction((currentScore) => {
+            return (currentScore || 0) + earnedPoints;
         });
     } else {
         feedback.style.color = "#d83b01";
         feedback.innerText = `Incorrecto. Has seleccionado otra opción.`;
     }
 
-    db.ref('salas/' + ROOM_PIN + '/respuestasRonda/' + qIndex + '/' + myStudentId).set(true);
+    db.ref('salas/' + currentPin + '/respuestasRonda/' + qIndex + '/' + myStudentId).set(true);
 }
 
 function showPodiumScreen() {
-    db.ref('salas/' + ROOM_PIN + '/jugadores').once('value', (snapshot) => {
+    db.ref('salas/' + currentPin + '/jugadores').once('value', (snapshot) => {
         let data = snapshot.val();
         let rankingContainer = document.getElementById('podium-ranking');
         if (!data) return;
@@ -197,7 +217,7 @@ function showPodiumScreen() {
 
         rankingContainer.innerHTML = playersArray.map((p, index) => {
             let medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `📌 #${index + 1}`;
-            return `<li class="podium-item"><span>${medal} ${p.nombre}</span><span style="color: var(--primary);">${p.puntaje || 0} Puntos</span></li>`;
+            return `<li class="podium-item"><span>${medal} ${p.nombre}</span><span>${p.puntaje || 0} Puntos</span></li>`;
         }).join('');
     });
 }

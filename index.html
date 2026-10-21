@@ -3,79 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ExcelData Quest - Panel Profesor</title>
+    <title>ExcelData Quest - Panel Profesor Pro</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <script src="preguntas.js"></script>
 
     <style>
-        :root { --primary: #107c41; --secondary: #217346; --dark: #1b1b1b; --light: #f3f2f1; --accent: #ffb900; --danger: #d83b01; }
+        :root { --primary: #107c41; --secondary: #217346; --dark: #1b1b1b; --light: #f3f2f1; --accent: #ffb900; --danger: #d83b01; --blue: #0078d4; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--light); color: var(--dark); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 95vh; }
         .container { width: 90%; max-width: 900px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); text-align: center; }
         h1 { color: var(--primary); margin-bottom: 5px; }
         .screen { display: none; }
         .screen.active { display: block; }
+        .form-group { margin: 15px 0; text-align: left; max-width: 400px; margin-left: auto; margin-right: auto; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 12px; font-size: 1rem; border: 2px solid #ccc; border-radius: 6px; box-sizing: border-box; }
         .btn { background-color: var(--primary); color: white; border: none; padding: 12px 25px; font-size: 1.1rem; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
         .btn:hover { background-color: var(--secondary); }
         .btn-danger { background-color: var(--danger); }
         .pin-display { background: #fff8dc; border: 2px dashed var(--accent); padding: 15px; font-size: 1.8rem; font-weight: bold; border-radius: 8px; display: inline-block; margin: 15px 0; letter-spacing: 2px; }
-        .players-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-height: 220px; overflow-y: auto; background: #faf9f8; padding: 15px; border-radius: 8px; border: 1px solid #edebe9; margin: 20px 0; }
+        .players-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-height: 200px; overflow-y: auto; background: #faf9f8; padding: 15px; border-radius: 8px; border: 1px solid #edebe9; margin: 20px 0; }
         .player-chip { background: var(--primary); color: white; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 0.95rem; }
         .question-counter { font-size: 0.85rem; color: #605e5c; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
         .question-text { font-size: 1.4rem; font-weight: 600; margin-bottom: 25px; }
-        .podium-list { list-style: none; padding: 0; max-width: 500px; margin: 0 auto 20px auto; text-align: left; }
-        .podium-item { background: #faf9f8; margin: 8px 0; padding: 12px 20px; border-radius: 6px; display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1rem; border-left: 5px solid var(--primary); }
-        .admin-controls { margin-top: 15px; border-top: 1px solid #edebe9; padding-top: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .option-box { padding: 22px; font-size: 1.1rem; font-weight: 600; border-radius: 8px; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .opt-0 { background-color: #d83b01; } .opt-1 { background-color: #0078d4; } .opt-2 { background-color: #107c41; } .opt-3 { background-color: #b4009e; }
+        .timer-box { font-size: 1.5rem; font-weight: bold; color: var(--danger); margin-bottom: 15px; }
+        
+        /* Podio del Top 3 */
+        .podium-container { display: flex; justify-content: center; align-items: flex-end; gap: 15px; margin: 30px 0; height: 200px; }
+        .podium-step { background: #edebe9; width: 120px; border-radius: 8px 8px 0 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 10px; font-weight: bold; }
+        .step-1 { height: 180px; background: #ffd700; color: #333; }
+        .step-2 { height: 140px; background: #c0c0c0; color: #333; }
+        .step-3 { height: 100px; background: #cd7f32; color: white; }
+        .podium-list { list-style: none; padding: 0; max-width: 500px; margin: 0 auto; text-align: left; }
+        .podium-item { background: #faf9f8; margin: 6px 0; padding: 10px 15px; border-radius: 6px; display: flex; justify-content: space-between; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>📊 Panel del Profesor</h1>
-    <p style="color: #605e5c; margin-top: 0;">Control de Sala Interactiva</p>
+    <h1>📊 Panel del Profesor Pro</h1>
+    <p style="color: #605e5c; margin-top: 0;">Configuración y Control de Partida</p>
 
-    <!-- PANTALLA DE SALA DE ESPERA -->
-    <div id="screen-lobby" class="screen active">
+    <!-- PANTALLA 1: CONFIGURACIÓN PREVIA -->
+    <div id="screen-config" class="screen active">
+        <h3>Configurar Nueva Partida</h3>
+        <div class="form-group">
+            <label>Selecciona el Tema / Repositorio:</label>
+            <select id="select-tema">
+                <!-- Se llena por JS -->
+            </select>
+        </div>
+        <div class="form-group">
+            <label>PIN de la Sala (Personalizado):</label>
+            <input type="text" id="input-custom-pin" value="2026" maxlength="4">
+        </div>
+        <div class="form-group">
+            <label>Tiempo por Pregunta (Segundos):</label>
+            <input type="number" id="input-tiempo" value="30" min="10" max="60">
+        </div>
+        <button class="btn" onclick="initializeRoom()" style="font-size: 1.2rem; margin-top: 10px;">Crear Sala de Juego 🚀</button>
+    </div>
+
+    <!-- PANTALLA 2: SALA DE ESPERA -->
+    <div id="screen-lobby" class="screen">
         <h3>Sala de Espera en Directo</h3>
         <p>Comparte este PIN con tus estudiantes:</p>
-        <div class="pin-display">PIN: <span id="lobby-pin">8420</span></div>
+        <div class="pin-display">PIN: <span id="lobby-pin">2026</span></div>
         
         <h4>Estudiantes Conectados (<span id="player-count">0</span>):</h4>
         <div class="players-grid" id="players-list-container">
             <span style="color: #a19f9d; font-style: italic;">Esperando conexiones...</span>
         </div>
 
-        <div class="admin-controls">
-            <button class="btn btn-danger" onclick="resetLobby()">Reiniciar Sala 🔄</button>
-            <button class="btn" onclick="hostStartQuiz()" style="font-size: 1.2rem;">¡Iniciar Partida 🎯</button>
-        </div>
+        <button class="btn" onclick="hostStartQuiz()" style="font-size: 1.2rem;">¡Iniciar Partida 🎯</button>
     </div>
 
-    <!-- PANTALLA DE PREGUNTA Y ESTADÍSTICAS -->
+    <!-- PANTALLA 3: PROYECTOR (IDÉNTICO A ESTUDIANTE CON TEMPORIZADOR) -->
     <div id="screen-host-quiz" class="screen">
         <div class="question-counter" id="host-q-counter">Pregunta 1</div>
-        <div class="question-text" id="host-q-text">Cargando pregunta...</div>
-        
-        <div style="background: #faf9f8; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: left;">
-            <p id="host-correct-answer-info" style="margin: 5px 0; font-size: 1rem;"><strong>Respuesta Correcta:</strong> Cargando...</p>
-            <p style="margin: 5px 0; font-size: 1rem;"><strong>Estudiantes que han respondido:</strong> <span id="host-answers-count" style="font-weight: bold; color: var(--primary);">0 / 0</span></p>
-        </div>
-
-        <button class="btn" onclick="hostShowPodium()" style="font-size: 1.2rem;">Ver Podio Parcial 🏆</button>
+        <div class="timer-box" id="host-timer">⏱️ 30s</div>
+        <div class="question-text" id="host-q-text">Cargando...</div>
+        <div class="options-grid" id="host-options-container"></div>
+        <p style="margin-top: 15px; font-weight: bold; color: var(--secondary);">Respuestas recibidas: <span id="host-answers-count">0</span></p>
     </div>
 
-    <!-- PANTALLA DE PODIO PARCIAL -->
-    <div id="screen-host-podium" class="screen">
-        <h2>🏆 Podio Parcial de la Ronda</h2>
-        <ul class="podium-list" id="host-podium-ranking"></ul>
-        <button class="btn" onclick="hostProceedToNextQuestion()" style="font-size: 1.2rem;">Siguiente Pregunta ➡️</button>
-    </div>
-
-    <!-- PANTALLA DE PODIO FINAL -->
+    <!-- PANTALLA 4: PODIO PARCIAL O FINAL -->
     <div id="screen-podium" class="screen">
-        <h2>🎉 ¡Podio Final del Concurso!</h2>
+        <h2 id="podium-title">🏆 Podio Parcial de la Ronda</h2>
+        <div class="podium-container" id="top3-container"></div>
         <ul class="podium-list" id="podium-ranking"></ul>
-        <button class="btn" onclick="location.reload()" style="margin-top: 10px;">Reiniciar Actividad 🔄</button>
+        <button class="btn" id="podium-next-btn" onclick="nextStepAfterPodium()" style="font-size: 1.2rem; margin-top: 20px;">Siguiente Pregunta ➡️</button>
     </div>
 </div>
 
@@ -93,26 +113,46 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-const ROOM_PIN = "8420";
+
+let activePin = "2026";
+let selectedTemaKey = "";
+let currentQuestionsList = [];
+let questionTimer = 30;
+let timerInterval = null;
+
+window.onload = function() {
+    let select = document.getElementById('select-tema');
+    for (let key in repositorioJuegos) {
+        let opt = document.createElement('option');
+        opt.value = key;
+        opt.innerText = repositorioJuegos[key].titulo;
+        select.appendChild(opt);
+    }
+};
 
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
 }
 
-window.onload = function() {
-    setupHost();
-};
+function initializeRoom() {
+    activePin = document.getElementById('input-custom-pin').value.trim() || "2026";
+    selectedTemaKey = document.getElementById('select-tema').value;
+    questionTimer = parseInt(document.getElementById('input-tiempo').value) || 30;
+    currentQuestionsList = repositorioJuegos[selectedTemaKey].preguntas;
 
-function setupHost() {
-    document.getElementById('lobby-pin').innerText = ROOM_PIN;
-    db.ref('salas/' + ROOM_PIN).set({
+    db.ref('salas/' + activePin).set({
         estado: 'espera',
         preguntaActual: 0,
+        tema: selectedTemaKey,
+        tiempo: questionTimer,
         jugadores: {}
     });
 
-    db.ref('salas/' + ROOM_PIN + '/jugadores').on('value', (snapshot) => {
+    showScreen('screen-lobby');
+    document.getElementById('lobby-pin').innerText = activePin;
+
+    db.ref('salas/' + activePin + '/jugadores').on('value', (snapshot) => {
         let data = snapshot.val();
         let container = document.getElementById('players-list-container');
         let countElem = document.getElementById('player-count');
@@ -127,80 +167,95 @@ function setupHost() {
     });
 }
 
-function resetLobby() {
-    setupHost();
-}
-
 function hostStartQuiz() {
-    db.ref('salas/' + ROOM_PIN).update({
+    db.ref('salas/' + activePin).update({
         estado: 'jugando',
-        preguntaActual: 0
+        preguntaActual: 0,
+        inicioPregunta: Date.now()
     });
-    startHostQuizView(0);
+    startHostQuestionView(0);
 }
 
-function startHostQuizView(qIndex) {
+function startHostQuestionView(qIndex) {
     showScreen('screen-host-quiz');
-    let q = bancoPreguntas[qIndex];
-    document.getElementById('host-q-counter').innerText = `Pregunta ${qIndex + 1} de ${bancoPreguntas.length}`;
+    let q = currentQuestionsList[qIndex];
+    document.getElementById('host-q-counter').innerText = `Pregunta ${qIndex + 1} de ${currentQuestionsList.length}`;
     document.getElementById('host-q-text').innerText = q.q;
-    document.getElementById('host-correct-answer-info').innerHTML = `<strong>Respuesta Correcta:</strong> <span style="color: var(--primary);">${q.options[q.correct]}</span>`;
 
-    db.ref('salas/' + ROOM_PIN + '/respuestasRonda/' + qIndex).on('value', (snapshot) => {
+    let optionsContainer = document.getElementById('host-options-container');
+    optionsContainer.innerHTML = "";
+    q.options.forEach((opt, index) => {
+        let div = document.createElement('div');
+        div.className = `option-box opt-${index}`;
+        div.innerText = opt;
+        optionsContainer.appendChild(div);
+    });
+
+    // Temporizador en pantalla
+    let timeLeft = questionTimer;
+    document.getElementById('host-timer').innerText = `⏱️ ${timeLeft}s`;
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        document.getElementById('host-timer').innerText = `⏱️ ${timeLeft}s`;
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            // Al terminar el tiempo, mostrar podio parcial o siguiente
+            showPodiumScreen(qIndex);
+        }
+    }, 1000);
+
+    db.ref('salas/' + activePin + '/respuestasRonda/' + qIndex).on('value', (snapshot) => {
         let resp = snapshot.val() || {};
         let totalJugadores = document.getElementById('player-count').innerText;
-        let respondidos = Object.keys(resp).length;
-        document.getElementById('host-answers-count').innerText = `${respondidos} / ${totalJugadores}`;
+        document.getElementById('host-answers-count').innerText = `${Object.keys(resp).length} / ${totalJugadores}`;
     });
 }
 
-function hostShowPodium() {
-    showScreen('screen-host-podium');
-    db.ref('salas/' + ROOM_PIN + '/jugadores').once('value', (snapshot) => {
-        let data = snapshot.val();
-        let rankingContainer = document.getElementById('host-podium-ranking');
-        if (!data) {
-            rankingContainer.innerHTML = `<li>No hay puntajes registrados aún.</li>`;
-            return;
-        }
-        let playersArray = Object.values(data);
-        playersArray.sort((a, b) => (b.puntaje || 0) - (a.puntaje || 0));
-
-        rankingContainer.innerHTML = playersArray.map((p, index) => {
-            let medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `📌 #${index + 1}`;
-            return `<li class="podium-item"><span>${medal} ${p.nombre}</span><span style="color: var(--primary);">${p.puntaje || 0} Puntos</span></li>`;
-        }).join('');
-    });
-}
-
-function hostProceedToNextQuestion() {
-    db.ref('salas/' + ROOM_PIN + '/preguntaActual').once('value', (snapshot) => {
-        let currentQ = snapshot.val() || 0;
-        let nextQ = currentQ + 1;
-
-        if (nextQ < bancoPreguntas.length) {
-            db.ref('salas/' + ROOM_PIN + '/preguntaActual').set(nextQ);
-            startHostQuizView(nextQ);
-        } else {
-            db.ref('salas/' + ROOM_PIN + '/estado').set('terminado');
-            showPodiumScreen();
-        }
-    });
-}
-
-function showPodiumScreen() {
+function showPodiumScreen(qIndex) {
+    clearInterval(timerInterval);
     showScreen('screen-podium');
-    db.ref('salas/' + ROOM_PIN + '/jugadores').once('value', (snapshot) => {
+    
+    db.ref('salas/' + activePin + '/jugadores').once('value', (snapshot) => {
         let data = snapshot.val();
-        let rankingContainer = document.getElementById('podium-ranking');
         if (!data) return;
         let playersArray = Object.values(data);
         playersArray.sort((a, b) => (b.puntaje || 0) - (a.puntaje || 0));
 
+        let isLast = (qIndex >= currentQuestionsList.length - 1);
+        document.getElementById('podium-title').innerText = isLast ? "🎉 ¡Podio Final del Concurso!" : "🏆 Podio Parcial de la Ronda";
+        document.getElementById('podium-next-btn').innerText = isLast ? "Reiniciar Actividad 🔄" : "Siguiente Pregunta ➡️";
+
+        // Renderizar Top 3 visual en escalones
+        let top3Container = document.getElementById('top3-container');
+        top3Container.innerHTML = `
+            <div class="podium-step step-2">🥈 ${playersArray[1] ? playersArray[1].nombre : '-'} <br><small>${playersArray[1] ? playersArray[1].puntaje : 0}p</small></div>
+            <div class="podium-step step-1">🥇 ${playersArray[0] ? playersArray[0].nombre : '-'} <br><small>${playersArray[0] ? playersArray[0].puntaje : 0}p</small></div>
+            <div class="podium-step step-3">🥉 ${playersArray[2] ? playersArray[2].nombre : '-'} <br><small>${playersArray[2] ? playersArray[2].puntaje : 0}p</small></div>
+        `;
+
+        let rankingContainer = document.getElementById('podium-ranking');
         rankingContainer.innerHTML = playersArray.map((p, index) => {
             let medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `📌 #${index + 1}`;
-            return `<li class="podium-item"><span>${medal} ${p.nombre}</span><span style="color: var(--primary);">${p.puntaje || 0} Puntos</span></li>`;
+            return `<li class="podium-item"><span>${medal} ${p.nombre}</span><span>${p.puntaje || 0} Puntos</span></li>`;
         }).join('');
+    });
+}
+
+function nextStepAfterPodium() {
+    db.ref('salas/' + activePin + '/preguntaActual').once('value', (snapshot) => {
+        let currentQ = snapshot.val() || 0;
+        let nextQ = currentQ + 1;
+
+        if (nextQ < currentQuestionsList.length) {
+            db.ref('salas/' + activePin).update({
+                preguntaActual: nextQ,
+                inicioPregunta: Date.now()
+            });
+            startHostQuestionView(nextQ);
+        } else {
+            location.reload();
+        }
     });
 }
 </script>
