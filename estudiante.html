@@ -6,7 +6,6 @@
     <title>ExcelData Quest - Estudiante Pro</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-    <script src="preguntas.js"></script>
 
     <style>
         :root { --primary: #107c41; --secondary: #217346; --dark: #1b1b1b; --light: #f3f2f1; --accent: #ffb900; --danger: #d83b01; }
@@ -132,11 +131,6 @@ function registerStudent() {
         showScreen('screen-student-waiting');
         document.getElementById('student-welcome-msg').innerText = `¡Hola, ${myStudentName}! 👋`;
 
-        // Cargar preguntas del tema de esta sala
-        let temaKey = salaData.tema;
-        currentQuestionsList = repositorioJuegos[temaKey].preguntas;
-
-        // Escuchar cambios de estado en la sala
         db.ref('salas/' + currentPin).on('value', (snap) => {
             let data = snap.val();
             if (!data) return;
@@ -145,11 +139,20 @@ function registerStudent() {
                 if (lastRenderedQuestion !== data.preguntaActual) {
                     lastRenderedQuestion = data.preguntaActual;
                     questionStartTime = data.inicioPregunta || Date.now();
-                    showScreen('screen-student-quiz');
-                    renderStudentQuestion(data.preguntaActual);
+                    
+                    // Descargar preguntas asociadas a esta sala desde Firebase
+                    db.ref('banco_cuestionarios').once('value', (qSnap) => {
+                        let allQuizzes = qSnap.val() || {};
+                        // Buscar dinámicamente según el título de la sala
+                        let activeQuiz = Object.values(allQuizzes).find(q => q.titulo === data.tituloQuiz);
+                        if (activeQuiz) {
+                            currentQuestionsList = activeQuiz.preguntas;
+                            showScreen('screen-student-quiz');
+                            renderStudentQuestion(data.preguntaActual);
+                        }
+                    });
                 }
             } else if (data.estado === 'terminado' || data.preguntaActual === -1) {
-                // Si la sala muestra podio
                 showScreen('screen-podium');
                 showPodiumScreen();
             }
@@ -189,7 +192,6 @@ function submitAnswer(qIndex, selectedIdx, correctIdx) {
     let isCorrect = (selectedIdx === correctIdx);
 
     if (isCorrect) {
-        // Cálculo de puntaje diferencial por velocidad (máx 1000, mínimo 500)
         let elapsedTime = (Date.now() - questionStartTime) / 1000;
         let earnedPoints = Math.max(500, Math.round(1000 - (elapsedTime * 20)));
 

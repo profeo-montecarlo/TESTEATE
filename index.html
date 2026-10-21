@@ -3,26 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ExcelData Quest - Panel Profesor Pro</title>
+    <title>ExcelData Quest - Panel Docente Pro Max</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-    <script src="preguntas.js"></script>
 
     <style>
         :root { --primary: #107c41; --secondary: #217346; --dark: #1b1b1b; --light: #f3f2f1; --accent: #ffb900; --danger: #d83b01; --blue: #0078d4; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--light); color: var(--dark); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 95vh; }
-        .container { width: 90%; max-width: 900px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); text-align: center; }
+        .container { width: 90%; max-width: 950px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); text-align: center; }
         h1 { color: var(--primary); margin-bottom: 5px; }
         .screen { display: none; }
         .screen.active { display: block; }
-        .form-group { margin: 15px 0; text-align: left; max-width: 400px; margin-left: auto; margin-right: auto; }
+        .form-group { margin: 15px 0; text-align: left; max-width: 500px; margin-left: auto; margin-right: auto; }
         label { display: block; font-weight: bold; margin-bottom: 5px; }
-        input, select { width: 100%; padding: 12px; font-size: 1rem; border: 2px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        input, select, textarea { width: 100%; padding: 10px; font-size: 1rem; border: 2px solid #ccc; border-radius: 6px; box-sizing: border-box; }
         .btn { background-color: var(--primary); color: white; border: none; padding: 12px 25px; font-size: 1.1rem; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
         .btn:hover { background-color: var(--secondary); }
         .btn-danger { background-color: var(--danger); }
+        .btn-blue { background-color: var(--blue); }
         .pin-display { background: #fff8dc; border: 2px dashed var(--accent); padding: 15px; font-size: 1.8rem; font-weight: bold; border-radius: 8px; display: inline-block; margin: 15px 0; letter-spacing: 2px; }
-        .players-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-height: 200px; overflow-y: auto; background: #faf9f8; padding: 15px; border-radius: 8px; border: 1px solid #edebe9; margin: 20px 0; }
+        .players-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-height: 180px; overflow-y: auto; background: #faf9f8; padding: 15px; border-radius: 8px; border: 1px solid #edebe9; margin: 15px 0; }
         .player-chip { background: var(--primary); color: white; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 0.95rem; }
         .question-counter { font-size: 0.85rem; color: #605e5c; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
         .question-text { font-size: 1.4rem; font-weight: 600; margin-bottom: 25px; }
@@ -31,33 +31,100 @@
         .opt-0 { background-color: #d83b01; } .opt-1 { background-color: #0078d4; } .opt-2 { background-color: #107c41; } .opt-3 { background-color: #b4009e; }
         .timer-box { font-size: 1.5rem; font-weight: bold; color: var(--danger); margin-bottom: 15px; }
         
-        /* Podio del Top 3 */
-        .podium-container { display: flex; justify-content: center; align-items: flex-end; gap: 15px; margin: 30px 0; height: 200px; }
-        .podium-step { background: #edebe9; width: 120px; border-radius: 8px 8px 0 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 10px; font-weight: bold; }
-        .step-1 { height: 180px; background: #ffd700; color: #333; }
-        .step-2 { height: 140px; background: #c0c0c0; color: #333; }
-        .step-3 { height: 100px; background: #cd7f32; color: white; }
+        .podium-container { display: flex; justify-content: center; align-items: flex-end; gap: 15px; margin: 25px 0; height: 180px; }
+        .podium-step { background: #edebe9; width: 110px; border-radius: 8px 8px 0 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 10px; font-weight: bold; }
+        .step-1 { height: 160px; background: #ffd700; color: #333; }
+        .step-2 { height: 120px; background: #c0c0c0; color: #333; }
+        .step-3 { height: 90px; background: #cd7f32; color: white; }
         .podium-list { list-style: none; padding: 0; max-width: 500px; margin: 0 auto; text-align: left; }
         .podium-item { background: #faf9f8; margin: 6px 0; padding: 10px 15px; border-radius: 6px; display: flex; justify-content: space-between; font-weight: bold; }
+        .card-box { background: #faf9f8; border: 1px solid #edebe9; padding: 20px; border-radius: 8px; margin-bottom: 15px; text-align: left; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>📊 Panel del Profesor Pro</h1>
-    <p style="color: #605e5c; margin-top: 0;">Configuración y Control de Partida</p>
+    <h1>📊 Panel Docente Pro Max</h1>
+    <p style="color: #605e5c; margin-top: 0;">Gestión de Cuestionarios y Salas en Directo</p>
 
-    <!-- PANTALLA 1: CONFIGURACIÓN PREVIA -->
-    <div id="screen-config" class="screen active">
+    <!-- MENÚ PRINCIPAL DOCENTE -->
+    <div id="screen-menu" class="screen active">
+        <h3>¿Qué deseas hacer hoy?</h3>
+        <div style="display: flex; gap: 20px; justify-content: center; margin-top: 30px;">
+            <button class="btn" onclick="showScreen('screen-config')" style="padding: 20px 30px; font-size: 1.1rem;">🚀 Crear Sala de Juego</button>
+            <button class="btn btn-blue" onclick="loadQuestionBankManager()" style="padding: 20px 30px; font-size: 1.1rem;">📂 Gestionar Banco de Preguntas</button>
+        </div>
+    </div>
+
+    <!-- GESTOR DEL BANCO DE PREGUNTAS (Listar, Borrar, Subir JSON y Formulario) -->
+    <div id="screen-bank-manager" class="screen">
+        <h3>Gestor del Banco de Preguntas (Nube Firebase)</h3>
+        
+        <div class="card-box">
+            <h4>📚 Cuestionarios Guardados en la Nube</h4>
+            <div id="cloud-quizzes-list">Cargando lista...</div>
+        </div>
+
+        <div class="card-box">
+            <h4>📥 Opción 1: Subir Archivo JSON Masivo</h4>
+            <input type="file" id="json-file-input" accept=".json" style="margin-bottom: 10px;">
+            <button class="btn btn-blue" onclick="importJsonQuiz()">Importar Archivo JSON</button>
+        </div>
+
+        <div class="card-box">
+            <h4>✍️ Opción 2: Crear Cuestionario Mediante Formulario Web</h4>
+            <div class="form-group">
+                <label>Título del Cuestionario / Grado:</label>
+                <input type="text" id="new-q-title" placeholder="Ej: Redes y Enrutamiento (Grado 11)">
+            </div>
+            <div class="form-group">
+                <label>Pregunta:</label>
+                <input type="text" id="new-question-text" placeholder="Escribe la pregunta...">
+            </div>
+            <div class="form-group">
+                <label>Opción 1 (Roja):</label>
+                <input type="text" id="opt-a" placeholder="Respuesta incorrecta">
+            </div>
+            <div class="form-group">
+                <label>Opción 2 (Azul):</label>
+                <input type="text" id="opt-b" placeholder="Respuesta correcta">
+            </div>
+            <div class="form-group">
+                <label>Opción 3 (Verde):</label>
+                <input type="text" id="opt-c" placeholder="Respuesta incorrecta">
+            </div>
+            <div class="form-group">
+                <label>Opción 4 (Morada):</label>
+                <input type="text" id="opt-d" placeholder="Respuesta incorrecta">
+            </div>
+            <div class="form-group">
+                <label>¿Cuál opción es la correcta?</label>
+                <select id="correct-opt-index">
+                    <option value="0">Opción 1</option>
+                    <option value="1">Opción 2</option>
+                    <option value="2">Opción 3</option>
+                    <option value="3">Opción 4</option>
+                </select>
+            </div>
+            <button class="btn" onclick="addNewQuestionToCloud()">Agregar Pregunta a la Lista ➕</button>
+            <div id="added-questions-preview" style="margin-top: 15px; font-weight: bold; color: var(--primary);">Preguntas agregadas en esta sesión: 0</div>
+            <button class="btn btn-blue" onclick="saveCompleteQuizToCloud()" style="margin-top: 15px;">Guardar Cuestionario en Firebase 💾</button>
+        </div>
+
+        <button class="btn btn-danger" onclick="showScreen('screen-menu')" style="margin-top: 10px;">⬅️ Volver al Menú</button>
+    </div>
+
+    <!-- CONFIGURACIÓN DE SALA -->
+    <div id="screen-config" class="screen">
         <h3>Configurar Nueva Partida</h3>
         <div class="form-group">
-            <label>Selecciona el Tema / Repositorio:</label>
+            <label>Selecciona el Cuestionario del Banco:</label>
             <select id="select-tema">
-                <!-- Se llena por JS -->
+                <option value="">Cargando cuestionarios...</option>
             </select>
         </div>
         <div class="form-group">
-            <label>PIN de la Sala (Personalizado):</label>
+            <label>PIN de la Sala:</label>
             <input type="text" id="input-custom-pin" value="2026" maxlength="4">
         </div>
         <div class="form-group">
@@ -65,9 +132,11 @@
             <input type="number" id="input-tiempo" value="30" min="10" max="60">
         </div>
         <button class="btn" onclick="initializeRoom()" style="font-size: 1.2rem; margin-top: 10px;">Crear Sala de Juego 🚀</button>
+        <br><br>
+        <button class="btn btn-danger" onclick="showScreen('screen-menu')">⬅️ Volver</button>
     </div>
 
-    <!-- PANTALLA 2: SALA DE ESPERA -->
+    <!-- SALA DE ESPERA -->
     <div id="screen-lobby" class="screen">
         <h3>Sala de Espera en Directo</h3>
         <p>Comparte este PIN con tus estudiantes:</p>
@@ -81,7 +150,7 @@
         <button class="btn" onclick="hostStartQuiz()" style="font-size: 1.2rem;">¡Iniciar Partida 🎯</button>
     </div>
 
-    <!-- PANTALLA 3: PROYECTOR (IDÉNTICO A ESTUDIANTE CON TEMPORIZADOR) -->
+    <!-- PROYECTOR / PREGUNTA -->
     <div id="screen-host-quiz" class="screen">
         <div class="question-counter" id="host-q-counter">Pregunta 1</div>
         <div class="timer-box" id="host-timer">⏱️ 30s</div>
@@ -90,7 +159,7 @@
         <p style="margin-top: 15px; font-weight: bold; color: var(--secondary);">Respuestas recibidas: <span id="host-answers-count">0</span></p>
     </div>
 
-    <!-- PANTALLA 4: PODIO PARCIAL O FINAL -->
+    <!-- PODIO -->
     <div id="screen-podium" class="screen">
         <h2 id="podium-title">🏆 Podio Parcial de la Ronda</h2>
         <div class="podium-container" id="top3-container"></div>
@@ -115,55 +184,188 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 let activePin = "2026";
-let selectedTemaKey = "";
 let currentQuestionsList = [];
 let questionTimer = 30;
 let timerInterval = null;
-
-window.onload = function() {
-    let select = document.getElementById('select-tema');
-    for (let key in repositorioJuegos) {
-        let opt = document.createElement('option');
-        opt.value = key;
-        opt.innerText = repositorioJuegos[key].titulo;
-        select.appendChild(opt);
-    }
-};
+let temporaryBatchQuestions = [];
 
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
 }
 
-function initializeRoom() {
-    activePin = document.getElementById('input-custom-pin').value.trim() || "2026";
-    selectedTemaKey = document.getElementById('select-tema').value;
-    questionTimer = parseInt(document.getElementById('input-tiempo').value) || 30;
-    currentQuestionsList = repositorioJuegos[selectedTemaKey].preguntas;
+function loadQuestionBankManager() {
+    showScreen('screen-bank-manager');
+    temporaryBatchQuestions = [];
+    document.getElementById('added-questions-preview').innerText = "Preguntas agregadas en esta sesión: 0";
+    renderCloudQuizzesList();
+}
 
-    db.ref('salas/' + activePin).set({
-        estado: 'espera',
-        preguntaActual: 0,
-        tema: selectedTemaKey,
-        tiempo: questionTimer,
-        jugadores: {}
-    });
+function renderCloudQuizzesList() {
+    let container = document.getElementById('cloud-quizzes-list');
+    container.innerHTML = "Cargando cuestionarios...";
 
-    showScreen('screen-lobby');
-    document.getElementById('lobby-pin').innerText = activePin;
-
-    db.ref('salas/' + activePin + '/jugadores').on('value', (snapshot) => {
-        let data = snapshot.val();
-        let container = document.getElementById('players-list-container');
-        let countElem = document.getElementById('player-count');
-        if (!data) {
-            container.innerHTML = `<span style="color: #a19f9d; font-style: italic;">Esperando conexiones...</span>`;
-            countElem.innerText = "0";
+    db.ref('banco_cuestionarios').once('value', (snapshot) => {
+        let quizzes = snapshot.val() || {};
+        if (Object.keys(quizzes).length === 0) {
+            container.innerHTML = "<p style='color: #605e5c; font-style: italic;'>No hay cuestionarios guardados en la nube todavía.</p>";
             return;
         }
-        let players = Object.values(data);
-        countElem.innerText = players.length;
-        container.innerHTML = players.map(p => `<div class="player-chip">👤 ${p.nombre} (${p.puntaje || 0} pts)</div>`).join('');
+
+        let html = "<ul style='list-style: none; padding: 0;'>";
+        for (let id in quizzes) {
+            let quiz = quizzes[id];
+            let numPreguntas = quiz.preguntas ? quiz.preguntas.length : 0;
+            html += `
+                <li style='background: #fff; margin: 8px 0; padding: 10px 15px; border-radius: 6px; border: 1px solid #edebe9; display: flex; justify-content: space-between; align-items: center;'>
+                    <div style="text-align: left;">
+                        <strong>📚 ${quiz.titulo}</strong><br>
+                        <small style="color: #605e5c;">${numPreguntas} preguntas registradas</small>
+                    </div>
+                    <button class="btn btn-danger" onclick="deleteCloudQuiz('${id}')" style="padding: 6px 12px; font-size: 0.9rem;">Eliminar 🗑️</button>
+                </li>
+            `;
+        }
+        html += "</ul>";
+        container.innerHTML = html;
+    });
+}
+
+function deleteCloudQuiz(quizId) {
+    if (confirm("¿Estás seguro de que deseas eliminar este cuestionario del banco?")) {
+        db.ref('banco_cuestionarios/' + quizId).remove((error) => {
+            if (!error) {
+                alert("Cuestionario eliminado correctamente.");
+                renderCloudQuizzesList();
+                updateQuizSelector();
+            } else {
+                alert("Error al intentar eliminar.");
+            }
+        });
+    }
+}
+
+function updateQuizSelector() {
+    let select = document.getElementById('select-tema');
+    select.innerHTML = '<option value="">Selecciona un cuestionario...</option>';
+    
+    db.ref('banco_cuestionarios').once('value', (snapshot) => {
+        let quizzes = snapshot.val() || {};
+        for (let id in quizzes) {
+            let opt = document.createElement('option');
+            opt.value = id;
+            opt.innerText = quizzes[id].titulo;
+            select.appendChild(opt);
+        }
+    });
+}
+
+function addNewQuestionToCloud() {
+    let qText = document.getElementById('new-question-text').value.trim();
+    let optA = document.getElementById('opt-a').value.trim();
+    let optB = document.getElementById('opt-b').value.trim();
+    let optC = document.getElementById('opt-c').value.trim();
+    let optD = document.getElementById('opt-d').value.trim();
+    let correctIdx = parseInt(document.getElementById('correct-opt-index').value);
+
+    if (!qText || !optA || !optB || !optC || !optD) {
+        alert("Por favor completa todos los campos.");
+        return;
+    }
+
+    temporaryBatchQuestions.push({ q: qText, options: [optA, optB, optC, optD], correct: correctIdx });
+    document.getElementById('added-questions-preview').innerText = `Preguntas agregadas en esta sesión: ${temporaryBatchQuestions.length}`;
+    document.getElementById('new-question-text').value = "";
+    document.getElementById('opt-a').value = "";
+    document.getElementById('opt-b').value = "";
+    document.getElementById('opt-c').value = "";
+    document.getElementById('opt-d').value = "";
+}
+
+function saveCompleteQuizToCloud() {
+    let title = document.getElementById('new-q-title').value.trim();
+    if (!title || temporaryBatchQuestions.length === 0) {
+        alert("Ponle título y agrega al menos una pregunta.");
+        return;
+    }
+
+    let quizId = 'quiz_' + Date.now();
+    db.ref('banco_cuestionarios/' + quizId).set({
+        titulo: title,
+        preguntas: temporaryBatchQuestions
+    }, (error) => {
+        if (!error) {
+            alert("¡Cuestionario guardado exitosamente!");
+            showScreen('screen-menu');
+            updateQuizSelector();
+        }
+    });
+}
+
+function importJsonQuiz() {
+    let fileInput = document.getElementById('json-file-input');
+    if (fileInput.files.length === 0) {
+        alert("Selecciona un archivo JSON.");
+        return;
+    }
+
+    let reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            let jsonContent = JSON.parse(e.target.result);
+            let quizId = 'quiz_' + Date.now();
+            db.ref('banco_cuestionarios/' + quizId).set(jsonContent, (error) => {
+                if (!error) {
+                    alert("¡Cuestionario JSON importado con éxito!");
+                    showScreen('screen-menu');
+                    updateQuizSelector();
+                }
+            });
+        } catch (err) {
+            alert("Formato JSON inválido.");
+        }
+    };
+    reader.readAsText(fileInput.files[0]);
+}
+
+function initializeRoom() {
+    activePin = document.getElementById('input-custom-pin').value.trim() || "2026";
+    let selectedQuizId = document.getElementById('select-tema').value;
+    questionTimer = parseInt(document.getElementById('input-tiempo').value) || 30;
+
+    if (!selectedQuizId) {
+        alert("Selecciona un cuestionario.");
+        return;
+    }
+
+    db.ref('banco_cuestionarios/' + selectedQuizId).once('value', (snapshot) => {
+        let quizData = snapshot.val();
+        currentQuestionsList = quizData.preguntas;
+
+        db.ref('salas/' + activePin).set({
+            estado: 'espera',
+            preguntaActual: 0,
+            tituloQuiz: quizData.titulo,
+            tiempo: questionTimer,
+            jugadores: {}
+        });
+
+        showScreen('screen-lobby');
+        document.getElementById('lobby-pin').innerText = activePin;
+
+        db.ref('salas/' + activePin + '/jugadores').on('value', (snap) => {
+            let data = snap.val();
+            let container = document.getElementById('players-list-container');
+            let countElem = document.getElementById('player-count');
+            if (!data) {
+                container.innerHTML = `<span style="color: #a19f9d; font-style: italic;">Esperando conexiones...</span>`;
+                countElem.innerText = "0";
+                return;
+            }
+            let players = Object.values(data);
+            countElem.innerText = players.length;
+            container.innerHTML = players.map(p => `<div class="player-chip">👤 ${p.nombre} (${p.puntaje || 0} pts)</div>`).join('');
+        });
     });
 }
 
@@ -191,7 +393,6 @@ function startHostQuestionView(qIndex) {
         optionsContainer.appendChild(div);
     });
 
-    // Temporizador en pantalla
     let timeLeft = questionTimer;
     document.getElementById('host-timer').innerText = `⏱️ ${timeLeft}s`;
     clearInterval(timerInterval);
@@ -200,7 +401,6 @@ function startHostQuestionView(qIndex) {
         document.getElementById('host-timer').innerText = `⏱️ ${timeLeft}s`;
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
-            // Al terminar el tiempo, mostrar podio parcial o siguiente
             showPodiumScreen(qIndex);
         }
     }, 1000);
@@ -226,7 +426,6 @@ function showPodiumScreen(qIndex) {
         document.getElementById('podium-title').innerText = isLast ? "🎉 ¡Podio Final del Concurso!" : "🏆 Podio Parcial de la Ronda";
         document.getElementById('podium-next-btn').innerText = isLast ? "Reiniciar Actividad 🔄" : "Siguiente Pregunta ➡️";
 
-        // Renderizar Top 3 visual en escalones
         let top3Container = document.getElementById('top3-container');
         top3Container.innerHTML = `
             <div class="podium-step step-2">🥈 ${playersArray[1] ? playersArray[1].nombre : '-'} <br><small>${playersArray[1] ? playersArray[1].puntaje : 0}p</small></div>
@@ -258,6 +457,10 @@ function nextStepAfterPodium() {
         }
     });
 }
+
+window.onload = function() {
+    updateQuizSelector();
+};
 </script>
 
 </body>
